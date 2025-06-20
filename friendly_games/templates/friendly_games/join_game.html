@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+
+{% block title %}Join Friendly Game - PFC{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="display-4 mb-4">Join Friendly Game</h1>
+            <p class="lead">Enter a match number to join an existing game</p>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Join Game</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Match Number -->
+                        <div class="mb-3">
+                            <label for="match_number" class="form-label">Match Number *</label>
+                            <input type="text" 
+                                   class="form-control form-control-lg text-center" 
+                                   id="match_number" 
+                                   name="match_number" 
+                                   placeholder="Enter 4-digit match number"
+                                   maxlength="4"
+                                   pattern="[0-9]{4}"
+                                   required>
+                            <div class="form-text">Ask the game creator for the 4-digit match number</div>
+                        </div>
+
+                        <!-- Player Name Search -->
+                        <div class="mb-3">
+                            <label for="player_search" class="form-label">Search & Select Your Name *</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="player_search" 
+                                   placeholder="Type your name to search..."
+                                   autocomplete="off"
+                                   value="{% if auto_selected_player %}{{ auto_selected_player.name }}{% endif %}">
+                            <input type="hidden" id="player_name" name="player_name" 
+                                   value="{% if auto_selected_player %}{{ auto_selected_player.name }}{% endif %}" required>
+                            
+                            <!-- Auto-selection feedback -->
+                            {% if auto_selected_player %}
+                            <div class="mt-2">
+                                <div class="alert alert-success py-2">
+                                    <i class="fas fa-check-circle"></i> 
+                                    <strong>Auto-selected!</strong> You've been automatically identified as {{ auto_selected_player.name }}
+                                    {% if auto_selected_player.team %}
+                                        <small class="text-muted"> - {{ auto_selected_player.team.name }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Search Results -->
+                            <div id="search_results" class="mt-2" style="display: none;">
+                                <div class="list-group" id="player_list">
+                                    <!-- Dynamic search results will appear here -->
+                                </div>
+                            </div>
+                            <div class="form-text">
+                                <i class="fas fa-search"></i> 
+                                {% if auto_selected_player %}
+                                    Auto-filled from your session, or start typing to change
+                                {% else %}
+                                    Start typing to find your name from existing players
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Team Selection -->
+                        <div class="mb-3">
+                            <label class="form-label">Choose Team *</label>
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="radio" 
+                                               name="team" 
+                                               id="team_black" 
+                                               value="BLACK" 
+                                               required>
+                                        <label class="form-check-label" for="team_black">
+                                            <div class="card bg-dark text-white">
+                                                <div class="card-body text-center">
+                                                    <h5>Black Team</h5>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="radio" 
+                                               name="team" 
+                                               id="team_white" 
+                                               value="WHITE" 
+                                               required>
+                                        <label class="form-check-label" for="team_white">
+                                            <div class="card bg-light">
+                                                <div class="card-body text-center">
+                                                    <h5>White Team</h5>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Position Selection -->
+                        <div class="mb-3">
+                            <label for="position" class="form-label">Position</label>
+                            <select class="form-select" id="position" name="position">
+                                <option value="TIRER" selected>Shooter</option>
+                                <option value="POINTEUR">Pointeur</option>
+                                <option value="MILIEU">Milieu</option>
+                            </select>
+                            <div class="form-text">Your playing position in the team</div>
+                        </div>
+
+                        <!-- Optional Codename -->
+                        <div class="mb-4">
+                            <label for="codename" class="form-label">Player Codename (Optional)</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="codename" 
+                                   name="codename" 
+                                   placeholder="Enter your 6-character codename"
+                                   maxlength="6"
+                                   value="{% if session_codename %}{{ session_codename }}{% endif %}">
+                            <div class="form-text">
+                                <i class="fas fa-info-circle"></i> 
+                                Enter your codename to record statistics for this game
+                                {% if session_codename %}
+                                <br><small class="text-success">
+                                    <i class="fas fa-check-circle"></i> Auto-filled from your session
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-users"></i> Join Game
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- How It Works -->
+            <div class="card mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-question-circle"></i> How It Works</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li>Get the 4-digit match number from the game creator</li>
+                        <li>Choose your team (Black or White) and position</li>
+                        <li>Optionally enter your codename to track statistics</li>
+                        <li>Maximum 3 players per team (Triplettes)</li>
+                        <li>Games expire after 24 hours</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="d-grid gap-2 mt-4">
+                <a href="{% url 'friendly_games:create_game' %}" class="btn btn-outline-success">
+                    <i class="fas fa-plus"></i> Create New Game Instead
+                </a>
+                <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-home"></i> Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-format match number input
+document.getElementById('match_number').addEventListener('input', function(e) {
+    // Only allow digits
+    this.value = this.value.replace(/[^0-9]/g, '');
+});
+
+// Auto-format codename input
+document.getElementById('codename').addEventListener('input', function(e) {
+    // Only allow alphanumeric characters and convert to uppercase
+    this.value = this.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+});
+
+// Player search functionality
+const playerSearch = document.getElementById('player_search');
+const searchResults = document.getElementById('search_results');
+const playerList = document.getElementById('player_list');
+const playerNameHidden = document.getElementById('player_name');
+
+// All players data (will be populated by backend)
+const allPlayers = {{ players_json|safe }};
+
+// Auto-selection visual feedback
+{% if auto_selected_player %}
+// Mark as valid if auto-selected
+playerSearch.classList.add('is-valid');
+{% endif %}
+
+playerSearch.addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase().trim();
+    
+    if (searchTerm.length === 0) {
+        searchResults.style.display = 'none';
+        playerNameHidden.value = '';
+        playerSearch.classList.remove('is-valid');
+        return;
+    }
+    
+    // Filter players
+    const matchingPlayers = allPlayers.filter(player => 
+        player.name.toLowerCase().includes(searchTerm)
+    );
+    
+    // Display results
+    if (matchingPlayers.length > 0) {
+        playerList.innerHTML = matchingPlayers.map(player => `
+            <button type="button" class="list-group-item list-group-item-action" 
+                    onclick="selectPlayer('${player.name.replace(/'/g, "\\'")}')">
+                <strong>${player.name}</strong>
+                <small class="text-muted"> - ${player.team}</small>
+            </button>
+        `).join('');
+        searchResults.style.display = 'block';
+    } else {
+        playerList.innerHTML = '<div class="list-group-item text-muted">No players found</div>';
+        searchResults.style.display = 'block';
+    }
+});
+
+function selectPlayer(playerName) {
+    playerNameHidden.value = playerName;
+    playerSearch.value = playerName;
+    searchResults.style.display = 'none';
+    
+    // Visual feedback
+    playerSearch.classList.add('is-valid');
+}
+
+// Hide search results when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#player_search') && !e.target.closest('#search_results')) {
+        searchResults.style.display = 'none';
+    }
+});
+</script>
+{% endblock %}
+
+
+
+
